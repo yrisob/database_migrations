@@ -6,7 +6,7 @@ import (
 	"github.com/yrisob/database_migrations/database"
 )
 
-const connectionString = "postgres://postgres:gfhjkm1986@127.0.0.1:5432/tc_user?sslmode=disable"
+const connectionString = "postgres://postgres:{password}@127.0.0.1:5432/tc_user?sslmode=disable"
 
 const queryInsert = `
 	CREATE TABLE "public".table_a(id integer, name varchar(100));
