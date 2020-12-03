@@ -37,7 +37,7 @@ func getDataSource(source string) (string, error) {
 	return source, nil
 }
 
-func upgradeDatabase(source, connectionString string) error {
+func UpgradeDatabase(source, connectionString string) error {
 	version, _ := database.GetMigrationVersion(connectionString)
 	files, err := ioutil.ReadDir(source)
 	if err != nil {
@@ -122,7 +122,7 @@ func main() {
 						return err
 					}
 					source := getPathWithSources(c.String("source"))
-					return upgradeDatabase(source, datasource)
+					return UpgradeDatabase(source, datasource)
 				},
 			},
 			{
