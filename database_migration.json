@@ -1,0 +1,9 @@
+{
+    "user" : "postgres",
+    "password": "gfhjkm1986",
+	"host": "127.0.0.1",
+	"port": 5432,
+	"database": "tc_user",
+	"sslmode": "disable",
+    "sources": "./db/migrations"
+}
