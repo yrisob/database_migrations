@@ -3,14 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/swaggo/cli"
 	"github.com/yrisob/database_migrations/config"
 	"github.com/yrisob/database_migrations/database"
+	"github.com/yrisob/database_migrations/migration"
 	"github.com/yrisob/database_migrations/utils"
 )
 
@@ -35,37 +34,6 @@ func getDataSource(source string) (string, error) {
 		return config.GetConnectionString(), nil
 	}
 	return source, nil
-}
-
-func UpgradeDatabase(source, connectionString string) error {
-	version, _ := database.GetMigrationVersion(connectionString)
-	files, err := ioutil.ReadDir(source)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range utils.SortFilesByNameAsc(files) {
-		fileVersion := utils.GetVersionByFileName(file.Name())
-		if !file.IsDir() && version < fileVersion {
-			bytes, err := ioutil.ReadFile(path.Join(source, file.Name()))
-			if err != nil {
-				return err
-			}
-			insertMigration := database.ExecuteScript(string(bytes))
-			updateVersion := database.UpdateMigrationVersion(fileVersion)
-			err = database.ExecMigrationOperations(connectionString, insertMigration, updateVersion)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	version, err = database.GetMigrationVersion(connectionString)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("New DB version is:", version)
-	return nil
 }
 
 func main() {
@@ -122,7 +90,7 @@ func main() {
 						return err
 					}
 					source := getPathWithSources(c.String("source"))
-					return UpgradeDatabase(source, datasource)
+					return migration.UpgradeDatabase(source, datasource)
 				},
 			},
 			{
