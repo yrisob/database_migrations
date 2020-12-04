@@ -10,13 +10,15 @@ import (
 )
 
 func UpgradeDatabase(source, connectionString string) error {
-	version, _ := database.GetMigrationVersion(connectionString)
+	
 	files, err := ioutil.ReadDir(source)
 	if err != nil {
 		return err
 	}
 
+	var version string
 	for _, file := range utils.SortFilesByNameAsc(files) {
+		version, _ = database.GetMigrationVersion(connectionString)
 		fileVersion := utils.GetVersionByFileName(file.Name())
 		if !file.IsDir() && version < fileVersion {
 			bytes, err := ioutil.ReadFile(path.Join(source, file.Name()))
