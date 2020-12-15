@@ -7,6 +7,8 @@ import (
 
 type MigrationOperation = func(tx *gorm.DB) error
 
+type CheckExistsOperation = func(tx *gorm.DB) bool
+
 func GetDB(connectionString string) (*gorm.DB, error) {
 	if db, err := gorm.Open("postgres", connectionString); err != nil {
 		return nil, err

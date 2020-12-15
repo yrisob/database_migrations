@@ -15,3 +15,4 @@
 # vendor/
 db/
 database_migrations
+database_migrations.json

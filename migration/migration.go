@@ -10,34 +10,42 @@ import (
 )
 
 func UpgradeDatabase(source, connectionString string) error {
-	
+
 	files, err := ioutil.ReadDir(source)
 	if err != nil {
 		return err
 	}
 
-	var version string
+	//var version string
+	executedVersions := []string{}
 	for _, file := range utils.SortFilesByNameAsc(files) {
-		version, _ = database.GetMigrationVersion(connectionString)
+		//version, _ = database.GetMigrationVersion(connectionString)
 		fileVersion := utils.GetVersionByFileName(file.Name())
-		if !file.IsDir() && version < fileVersion {
+		isVersionSuccessfullyAdd, err := database.IsSuccessfullyExecuted(fileVersion, connectionString)
+		if err != nil {
+			return err
+		}
+		if !file.IsDir() && !isVersionSuccessfullyAdd {
+			executedVersions = append(executedVersions, fileVersion)
 			bytes, err := ioutil.ReadFile(path.Join(source, file.Name()))
 			if err != nil {
 				return err
 			}
 			insertMigration := database.ExecuteScript(string(bytes))
-			updateVersion := database.UpdateMigrationVersion(fileVersion)
+			updateVersion := database.CreateOrUpdateMigrationVersion(fileVersion, false)
 			err = database.ExecMigrationOperations(connectionString, insertMigration, updateVersion)
 			if err != nil {
-				return err
+				if err = database.ExecMigrationOperations(connectionString, database.CreateOrUpdateMigrationVersion(fileVersion, true)); err != nil {
+					return err
+				}
 			}
 		}
 	}
-	version, err = database.GetMigrationVersion(connectionString)
-	if err != nil {
-		return err
-	}
+	// version, err = database.GetMigrationVersion(connectionString)
+	// if err != nil {
+	// 	return err
+	// }
 
-	fmt.Println("New DB version is:", version)
+	fmt.Printf("Executed this versions: %v \n", executedVersions)
 	return nil
 }
