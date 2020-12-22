@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/swaggo/cli"
 	"github.com/yrisob/database_migrations/config"
 	"github.com/yrisob/database_migrations/database"
@@ -108,11 +109,17 @@ func main() {
 					if err != nil {
 						return err
 					}
-					version, err := database.GetMigrationVersion(datasource)
+					migrations, err := database.GetMigrationVersion(datasource)
 					if err != nil {
 						return err
 					}
-					fmt.Println("Database version is:", version)
+					t := table.NewWriter()
+					t.SetOutputMirror(os.Stdout)
+					t.AppendHeader(table.Row{"Version", "Faild", "Date"})
+					for _, migration := range *migrations {
+						t.AppendRow([]interface{}{migration.Version, migration.Faild, migration.UpdatedAt})
+					}
+					t.Render()
 					return nil
 				},
 			},

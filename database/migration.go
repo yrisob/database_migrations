@@ -7,11 +7,14 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type Migration struct {
-	Version   string `gorm:"primary_key;not null;"`
-	UpdatedAt time.Time
-	Faild     bool `gorm:"type:boolean;not null;default:false"`
-}
+type (
+	Migrations []Migration
+	Migration  struct {
+		Version   string `gorm:"primary_key;not null;"`
+		UpdatedAt time.Time
+		Faild     bool `gorm:"type:boolean;not null;default:false"`
+	}
+)
 
 // IsSuccessfullyExecuted проверяем наличие версии в базе, если нет или она была с ошибками, проверка выдаст отсутствие записи
 func IsSuccessfullyExecuted(version string, connectionString string) (bool, error) {
@@ -19,8 +22,12 @@ func IsSuccessfullyExecuted(version string, connectionString string) (bool, erro
 	if err != nil {
 		return false, err
 	}
+	defer db.Close()
 	migration := &Migration{}
-	db.AutoMigrate(migration)
+	tableExists := db.HasTable(migration)
+	if !tableExists {
+		db.AutoMigrate(migration)
+	}
 	if err := db.First(migration, version).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return false, nil
@@ -43,18 +50,18 @@ func CreateOrUpdateMigrationVersion(version string, faild bool) MigrationOperati
 	}
 }
 
-func GetMigrationVersion(connectionString string) (string, error) {
+func GetMigrationVersion(connectionString string) (*Migrations, error) {
 	db, err := GetDB(connectionString)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer db.Close()
-	migration := &Migration{}
-	err = db.First(migration).Error
+	migrations := &Migrations{}
+	err = db.Find(migrations).Error
 	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		return "", err
+		return nil, err
 	} else if err != nil && gorm.IsRecordNotFoundError(err) {
-		return "", errors.New("isn't any migrations")
+		return nil, errors.New("isn't any migrations")
 	}
-	return migration.Version, nil
+	return migrations, nil
 }
